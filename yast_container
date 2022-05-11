@@ -10,4 +10,4 @@ docker build -t "$CONTAINER_NAME" .
 # start the container with extra "-e" and "-v" options to allow accessing
 # the local X server from inside the Docker container
 docker run -it -v "/:/mnt" -v "/tmp:/tmp" --privileged \
-    --rm "$CONTAINER_NAME" /sbin/yast chroot_wrapper "$1"
+    --rm "$CONTAINER_NAME" /sbin/yast "$@"

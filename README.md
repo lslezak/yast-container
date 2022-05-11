@@ -1,2 +1,2 @@
-## Experimentasl YaST Docker Container
+## Experimental YaST Docker Container
 

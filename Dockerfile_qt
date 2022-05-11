@@ -7,6 +7,7 @@ RUN zypper --non-interactive install --no-recommends \
 # install the YaST graphical frontend + theme + fonts
 RUN zypper --non-interactive install --no-recommends \
   libyui-qt \
+  libyui-qt-pkg \
   gnu-unifont-bitmap-fonts \
   google-roboto-fonts \
   yast2-theme

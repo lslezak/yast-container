@@ -26,6 +26,9 @@ handle = Yast::WFM.SCROpen("chroot=#{Yast::Installation.destdir}:scr", false)
 Yast::WFM.SCRSetDefault(handle)
 
 # initialize the package manager in the /mnt chroot
+# (This is not strictly required by all clients, but as we do not know whether
+# the client will or will not use the package management so we do it always
+# just to be safe.)
 Yast.import "Pkg"
 Yast::Pkg.TargetInitialize(Yast::Installation.destdir)
 Yast::Pkg.TargetLoad
