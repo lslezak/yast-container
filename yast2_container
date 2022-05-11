@@ -1,0 +1,16 @@
+#! /bin/bash
+set -x
+
+# target container name
+CONTAINER_NAME="yast-mgmt-qt"
+
+# make sure the base image is up to date
+docker build -t yast-mgmt-ncurses .
+# build the docker image first (it reuses the built image in the next run)
+docker build -t "$CONTAINER_NAME" -f Dockerfile_qt .
+
+# start the container with extra "-e" and "-v" options to allow accessing
+# the local X server from inside the Docker container
+docker run -it -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro --net=host \
+    -v "$HOME/.Xauthority:/root/.Xauthority:ro" -v "/:/mnt" -v "/tmp:/tmp" \
+    --privileged --rm "$CONTAINER_NAME" /sbin/yast2 chroot_wrapper "$1"

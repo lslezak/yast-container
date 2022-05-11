@@ -1,0 +1,12 @@
+FROM yast-mgmt-ncurses
+
+# install X11
+RUN zypper --non-interactive install --no-recommends \
+  -t pattern x11
+
+# install the YaST graphical frontend + theme + fonts
+RUN zypper --non-interactive install --no-recommends \
+  libyui-qt \
+  gnu-unifont-bitmap-fonts \
+  google-roboto-fonts \
+  yast2-theme
