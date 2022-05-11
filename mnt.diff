@@ -1,0 +1,22 @@
+diff --git a/src/modules/Sysconfig.rb b/src/modules/Sysconfig.rb
+index 401bd6b..b79611b 100644
+--- a/src/modules/Sysconfig.rb
++++ b/src/modules/Sysconfig.rb
+@@ -32,13 +32,11 @@ module Yast
+ 
+ 
+       @configfiles = [
+-        "/etc/sysconfig/*",
+-        "/etc/sysconfig/network/ifcfg-*",
+-        "/etc/sysconfig/network/dhcp",
+-        "/etc/sysconfig/network/config",
++        "/mnt/etc/sysconfig/*",
++        "/mnt/etc/sysconfig/network/ifcfg-*",
++        "/mnt/etc/sysconfig/network/dhcp",
++        "/mnt/etc/sysconfig/network/config",
+         Ops.add(Directory.ydatadir, "/descriptions"),
+-        "/etc/sysconfig/powersave/*",
+-        "/etc/sysconfig/uml/*"
+       ]
+ 
+       # Additional files from Import
