@@ -1,3 +1,6 @@
+# This extends the YaST Docker container with X libraries and Qt graphical
+# frontend. You can run YaST with graphical interface even from a container.
+
 FROM yast-mgmt-ncurses
 
 # install X11

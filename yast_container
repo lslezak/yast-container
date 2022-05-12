@@ -1,4 +1,11 @@
 #! /bin/bash
+
+# This is a helper script which builds the YaST Docker container and starts
+# the specified YaST module there. It bind-mounts the host system into the
+# container so YaST can change the chost system through that.
+#
+# This script runs the YaST module with ncurses (text mode) UI.
+
 set -x
 
 # target container name
@@ -9,5 +16,5 @@ docker build -t "$CONTAINER_NAME" .
 
 # start the container with extra "-e" and "-v" options to allow accessing
 # the local X server from inside the Docker container
-docker run -it -v "/:/mnt" -v "/tmp:/tmp" --privileged \
+docker run -it -v "/:/mnt" -v "/tmp:/tmp" --privileged --hostname yast-container \
     --rm "$CONTAINER_NAME" /sbin/yast "$@"

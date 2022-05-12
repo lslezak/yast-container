@@ -1,3 +1,6 @@
+# This is file defines a Docker container based on openSUSE Leap
+# and installs few YaST modules.
+
 FROM opensuse/leap:15.3
 
 # install some YaST modules with the default ncurses UI
@@ -9,7 +12,7 @@ RUN zypper --non-interactive install \
 
 # patch sysconfig so it reads the files from /mnt/...
 COPY mnt.diff .
-RUN patch -i mnt.diff /usr/share/YaST2/modules/Sysconfig.rb
+RUN patch -i mnt.diff /usr/share/YaST2/modules/Sysconfig.rb && rm mnt.diff
 
 # install the chroot wrapper client
 COPY chroot_wrapper.rb /usr/share/YaST2/clients/

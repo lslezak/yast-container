@@ -42,18 +42,36 @@ cd yast-container
 ```
 
 If you want to use Docker as a non-root user add yourselves into the `docker`
-user group.
+user group. *(Security note: Be careful, such users become equivalent to `root`...)*
 
 ### Running a Container
 
+There are two helper scripts, `yast_container` and `yast2_container`. The first
+runs the specified YaST module in ncurses UI, the second one uses Qt UI.
 
+The scripts build the container image at start if it is not built yet and then
+run the specified YaST module in the container.
+
+The container is automatically deleted after finishing YaST, if you want to
+inspect the container you have to start it manually.
 
 ### Tested Modules
 
-- `yast2 chroot_wrapper repositories`
-- `yast2 chroot_wrapper sw_single`
-- `yast2 sysconfig`
-- `yast2 chroot_wrapper disk`
+This is a list of YaST modules which you can try with the testing image:
+
+- `yast2_container chroot_wrapper repositories` - shows the repositories from
+  the host system, unfortunately it tries to save the changes to the container...
+- `yast2_container chroot_wrapper sw_single` - package installation works fine,
+  tha packages are correctly installed in the host system (though there is a
+  problem with the libzypp lock, see below...)
+- `yast2_container chroot_wrapper key_manager` - displays the imported GPG keys
+  known by the package management - again, saving changes does not work
+- `yast2_container sysconfig` - the patched modules can edit the files in the
+  host system, the missing part is running the activation commands in the chroot
+- `yast2_container chroot_wrapper disk` - it displays the devices, but does not
+  display the mount point (probably because `/etc/fstab` is read from the container)
+
+Feel free to experiment with other YaST modules... :wink:
   
 ## Implementation Details
 
@@ -64,13 +82,17 @@ module will work properly in the client, see the problems mentioned below.
 
 ## Problems
 
+Unfortunately that helper does not solve all problems, in general you cannot
+expect that you can just wrap existing modules by this wrapper and everything
+will work fine. No, that's not the case... :worried:
+
 ### Accessing the Host System
 
 The host system is mounted to `/mnt` directory in the container. YaST must use
 this subdirectory instead of the root directory for reading/writing files.
 
-But that's usually not the case, esp. for modules designed to run only in
-installed system.
+But that's usually not supported, esp. for modules designed to run only in
+an installed system.
 
 ### Package Management
 
@@ -92,7 +114,7 @@ Unfortunately this distinction is missing in YaST...
 ### Executing commands
 
 Similarly to the package management, it is important to know where the executed
-command is available and where it needs run.
+command is available and where it needs to run.
 
 - Run the command in the container (e.g. `fdisk` can be used from a container
   and does not need access to the host files)
@@ -100,14 +122,21 @@ command is available and where it needs run.
 - Run it in the container but copy the result into the target system
 - Run it in the host system using `chroot` (but that requires the command to be
   available in the host system)
+- Run the command using `ssh`, this would ensure it is fully executed in the host
+  system
 
 *Note: The YaST SCR component allow chrooting (see the [chroot_wrapper.rb](
 ./chroot_wrapper.rb) file), but that uses the parser and YaST libraries from the
 host system, that means it would require some YaST packages there. That's against
 the goal which we want to achieve with containers...*
 
+### Other Interactions with the System
 
-### Logging
+It is a question which other interactions with the host system are possible
+or are not allowed. It turned out that even loading kernel modules works
+with `chroot /mnt modprobe <module>`...
+
+### Logging and Locking
 
 The log is written into `/var/log/YaST2/y2log` in the container, after finishing
 the container the log is lost. That's not good for debugging purposes.
@@ -115,4 +144,18 @@ the container the log is lost. That's not good for debugging purposes.
 YaST should redirect the logging into `/mnt`, either by setting the log file or
 indirectly via a symlink in `/var/log`.
 
+A similar problem is with locking. E.g libzypp creates `/var/run/zypp.pid` lock
+file to avoid running multiple instances of the package management at once.
+But that files is created in side the container...
+
 ### Summary
+
+It seems that it should be possible to fully manage the host system from
+a container.
+
+However, the current YaST is not prepared for that. The adjustments seem to
+be small but a lot of places would need to be updated.
+
+On the other hand some YaST modules do not make sense in a containerized world,
+for example the module for HTTP server. It is supposed that the HTTP server
+would run in a separate container.

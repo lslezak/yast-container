@@ -12,6 +12,9 @@
 # ------------------------------------------------------------------------------
 #
 
+# This is a helper script which redirects the system interaction to /mnt
+# subdirectory and then runs the specified YaST client.
+
 require "yast"
 
 client = Yast::WFM.Args.first
@@ -30,6 +33,7 @@ Yast::WFM.SCRSetDefault(handle)
 # the client will or will not use the package management so we do it always
 # just to be safe.)
 Yast.import "Pkg"
+puts "Initializing the package manager..."
 Yast::Pkg.TargetInitialize(Yast::Installation.destdir)
 Yast::Pkg.TargetLoad
 Yast::Pkg.SourceRestore
