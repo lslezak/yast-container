@@ -16,5 +16,5 @@ docker build -t "$CONTAINER_NAME" .
 
 # start the container with extra "-e" and "-v" options to allow accessing
 # the local X server from inside the Docker container
-docker run -it -v "/:/mnt" -v "/tmp:/tmp" --privileged --hostname yast-container \
+docker run -it -v "/:/mnt" --privileged --hostname yast-container \
     --rm "$CONTAINER_NAME" /sbin/yast "$@"
