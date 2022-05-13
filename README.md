@@ -42,7 +42,7 @@ cd yast-container
 ```
 
 If you want to use Docker as a non-root user add yourselves into the `docker`
-user group. *(Security note: Be careful, such users become equivalent to `root`...)*
+user group. *(Security note: Be careful, such users become equivalent to `root`!)*
 
 ### Running a Container
 
@@ -67,9 +67,9 @@ This is a list of YaST modules which you can try with the testing image:
 - `yast2_container chroot_wrapper key_manager` - displays the imported GPG keys
   known by the package management - again, saving changes does not work
 - `yast2_container sysconfig` - the patched modules can edit the files in the
-  host system, the missing part is running the activation commands in the chroot
-- `yast2_container chroot_wrapper disk` - it displays the devices, but does not
-  display the mount point (probably because `/etc/fstab` is read from the container)
+  host system properly
+- `yast2_container chroot_wrapper disk` - it displays the devices, but it does not
+  display the mount points (probably because `/etc/fstab` is read from the container)
 
 Feel free to experiment with other YaST modules... :wink:
   
@@ -96,7 +96,7 @@ an installed system.
 
 ### Package Management
 
-Libzyp supports installing into a chroot directory, that's used during standard
+Libzypp supports installing into a chroot directory, that's used during standard
 installation. That means the package management should work fine.
 
 But the problem is that YaST needs to distinguish between the packages needed
@@ -154,8 +154,10 @@ It seems that it should be possible to fully manage the host system from
 a container.
 
 However, the current YaST is not prepared for that. The adjustments seem to
-be small but a lot of places would need to be updated.
+be small but a lot of places would need to be updated. It should be similar
+to moving some configuration steps from the second installation stage
+(running in `/`) to the first stage (running in `/mnt`) as we did some time ago.
 
-On the other hand some YaST modules do not make sense in a containerized world,
+Also some YaST modules do not make sense in a containerized world,
 for example the module for HTTP server. It is supposed that the HTTP server
-would run in a separate container.
+would run in a separate container, managed by other tools.
