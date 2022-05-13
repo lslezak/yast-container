@@ -13,15 +13,15 @@ breaking the system or data loss!**
 
 The goal is to decrease the size of the system and avoid unnecessary dependencies.
 
-Using a separate container would also allow upgrading the tools, libraries
-and languages without affecting the users. I.e. we could use newer Ruby in
-YaST and still keep the old one in SLE/Leap.
+Using a separate container would also make upgrading the tools, libraries
+and languages easier, without affecting the users. We could use newer Ruby in
+the YaST container and keep the old one in SLE/Leap for backward compatibility.
 
 ## Proof of Concept
 
-This repository contains some scripts and container definition
+This repository contains some scripts and container definitions.
 
-*Note: The containers use the openSUSE Leap 15.3 system and should be used for
+*Note: The containers use the openSUSE Leap 15.3 base system and should be used for
 managing an openSUSE Leap 15.3 system. If you use a different version adapt
 the `Dockerfile` accordingly.*
 
@@ -118,12 +118,13 @@ command is available and where it needs to run.
 
 - Run the command in the container (e.g. `fdisk` can be used from a container
   and does not need access to the host files)
-- Run it in the container and pass it `/mnt` option if that is possible
+- Run it in the container and pass it `/mnt` option if that is possible so
+  it modifies the host system
 - Run it in the container but copy the result into the target system
 - Run it in the host system using `chroot` (but that requires the command to be
   available in the host system)
 - Run the command using `ssh`, this would ensure it is fully executed in the host
-  system
+  system context
 
 *Note: The YaST SCR component allow chrooting (see the [chroot_wrapper.rb](
 ./chroot_wrapper.rb) file), but that uses the parser and YaST libraries from the
@@ -133,20 +134,20 @@ the goal which we want to achieve with containers...*
 ### Other Interactions with the System
 
 It is a question which other interactions with the host system are possible
-or are not allowed. It turned out that even loading kernel modules works
-with `chroot /mnt modprobe <module>`...
+or not. It turned out that even loading kernel modules works with
+`chroot /mnt modprobe <module>`...
 
 ### Logging and Locking
 
-The log is written into `/var/log/YaST2/y2log` in the container, after finishing
-the container the log is lost. That's not good for debugging purposes.
+The YaST log is written into `/var/log/YaST2/y2log` in the container, after finishing
+the container the log is lost. That's not good for debugging problems.
 
-YaST should redirect the logging into `/mnt`, either by setting the log file or
-indirectly via a symlink in `/var/log`.
+YaST should redirect the logging into `/mnt`, either by setting the logging
+target or indirectly via a symlink in `/var/log` in the container.
 
 A similar problem is with locking. E.g libzypp creates `/var/run/zypp.pid` lock
 file to avoid running multiple instances of the package management at once.
-But that files is created in side the container...
+But that file is currently created inside the container...
 
 ### Summary
 
