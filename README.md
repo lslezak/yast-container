@@ -149,6 +149,16 @@ A similar problem is with locking. E.g libzypp creates `/var/run/zypp.pid` lock
 file to avoid running multiple instances of the package management at once.
 But that file is currently created inside the container...
 
+### Problem - Sending Signals
+
+So far the only problem seems to be sending signals to the processes running
+in the host. The problem is that processes running in a container run in
+a different process space and cannot interact between them. So if you need to
+send a signal to restart a service then you cannot do that directly.
+
+We could use `ssh` for that or write a small DBus service. Fortunately sending
+signals is not very common in YaST..
+
 ### Summary
 
 It seems that it should be possible to fully manage the host system from
