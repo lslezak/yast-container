@@ -149,15 +149,17 @@ A similar problem is with locking. E.g libzypp creates `/var/run/zypp.pid` lock
 file to avoid running multiple instances of the package management at once.
 But that file is currently created inside the container...
 
-### Problem - Sending Signals
+### Sending Signals
 
-So far the only problem seems to be sending signals to the processes running
-in the host. The problem is that processes running in a container run in
-a different process space and cannot interact between them. So if you need to
-send a signal to restart a service then you cannot do that directly.
+Normally the processes in a container start with PID 1 and the processes in
+the host or in other containers are not visible.
 
-We could use `ssh` for that or write a small DBus service. Fortunately sending
-signals is not very common in YaST..
+That's a problem if you need to send a signal to a processes running
+in the host or you need to check whether some process is running.
+
+Fortunately Docker provides the `--pid=host` option which disables the process
+name space and allows to see all processes in the host. See more details in the
+[documentation](https://docs.docker.com/engine/reference/run/#pid-settings---pid).
 
 ### Summary
 
