@@ -6,13 +6,17 @@
 #
 # This script runs the YaST module with ncurses (text mode) UI.
 
-set -x
+set -ex
 
 # target container name
 CONTAINER_NAME="yast-mgmt-ncurses"
 
+VERSION=`(. /etc/os-release && echo "$VERSION")`
+# base OS for the Docker image
+: "${DOCKER_BASE_IMAGE=opensuse/leap:$VERSION}"
+
 # build the docker image first (it reuses the built image in the next run)
-docker build -t "$CONTAINER_NAME" .
+docker build --build-arg image="$DOCKER_BASE_IMAGE" -t "$CONTAINER_NAME" .
 
 # start the container with extra "-e" and "-v" options to allow accessing
 # the local X server from inside the Docker container

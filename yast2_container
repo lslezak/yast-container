@@ -7,13 +7,17 @@
 # This script runs the YaST module with Qt (graphical) UI so it needs a running
 # X server.
 
-set -x
+set -ex
 
 # target container name
 CONTAINER_NAME="yast-mgmt-qt"
 
+VERSION=`(. /etc/os-release && echo "$VERSION")`
+# base OS for the Docker image
+: "${DOCKER_BASE_IMAGE=opensuse/leap:$VERSION}"
+
 # make sure the base image is up to date
-docker build -t yast-mgmt-ncurses .
+docker build --build-arg image="$DOCKER_BASE_IMAGE" -t yast-mgmt-ncurses .
 # build the docker image first (it reuses the built image in the next run)
 docker build -t "$CONTAINER_NAME" -f Dockerfile_qt .
 
