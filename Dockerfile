@@ -15,8 +15,7 @@ RUN zypper --non-interactive install \
   yast2-sysconfig
 
 # redirect logging to the host
-RUN mv /var/log /var/log.orig && ln -s /mnt/var/log /var/log
-
+RUN mv /var/log /var/log.orig && mkdir -p /mnt/var/log/ && ln -s /mnt/var/log /var/log
 
 # patch sysconfig so it reads the files from /mnt/...
 COPY mnt.diff .
