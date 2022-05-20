@@ -2,21 +2,17 @@
 # and installs few YaST modules.
 
 # the default base image
-ARG image=opensuse/leap:15.3
+ARG image=opensuse/leap:15.4
 FROM ${image}
 
 # install some YaST modules with the default ncurses UI
 RUN zypper --non-interactive install \
+  "rubygem(yast-rake)" \
   patch \
   yast2-packager \
   yast2-registration \
   yast2-storage-ng \
   yast2-sysconfig
-
-# read/write the libzypp lock to /mnt/...
-ENV ZYPP_LOCKFILE_ROOT=/mnt
-# set YaST target
-ENV YAST_TARGET_DIR=/mnt
 
 # redirect logging to the host
 RUN mv /var/log /var/log.orig && ln -s /mnt/var/log /var/log
@@ -26,5 +22,10 @@ RUN mv /var/log /var/log.orig && ln -s /mnt/var/log /var/log
 COPY mnt.diff .
 RUN patch -i mnt.diff /usr/share/YaST2/modules/Sysconfig.rb && rm mnt.diff
 
-COPY y2start.diff .
-RUN patch -i y2start.diff /usr/lib/YaST2/bin/y2start && rm y2start.diff
+# patch the Installation module to handle YAST_TARGET_DIR
+COPY Installation.diff .
+RUN patch -i Installation.diff /usr/share/YaST2/modules/Installation.rb && rm Installation.diff
+
+# add Arch.is_management_container
+COPY Arch.diff .
+RUN patch -i Arch.diff /usr/share/YaST2/modules/Arch.rb && rm Arch.diff

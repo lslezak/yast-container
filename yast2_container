@@ -12,7 +12,10 @@ set -ex
 # target container name
 CONTAINER_NAME="yast-mgmt-qt"
 
-VERSION=`(. /etc/os-release && echo "$VERSION")`
+# VERSION=`(. /etc/os-release && echo "$VERSION")`
+# The used patches are against 15.4
+VERSION=15.4
+
 # base OS for the Docker image
 : "${DOCKER_BASE_IMAGE=opensuse/leap:$VERSION}"
 
@@ -24,5 +27,6 @@ docker build -t "$CONTAINER_NAME" -f Dockerfile_qt .
 # start the container with extra "-e" and "-v" options to allow accessing
 # the local X server from inside the Docker container
 docker run -it -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro --net=host \
+    -e ZYPP_LOCKFILE_ROOT=/mnt -e YAST_TARGET_DIR=/mnt \
     -v "$HOME/.Xauthority:/root/.Xauthority:ro" -v "/:/mnt" \
     --privileged --pid=host --ipc=host --rm "$CONTAINER_NAME" /sbin/yast2 "$@"

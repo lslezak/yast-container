@@ -21,12 +21,8 @@ the YaST container and keep the old one in SLE/Leap for backward compatibility.
 
 This repository contains some scripts and container definitions.
 
-*Note: The containers use the openSUSE Leap base system with the same version
-as the host system. But you can specify the base OS image with the
-
-and should be used for
-managing an openSUSE Leap 15.3 system. If you use a different version adapt
-the `Dockerfile` accordingly.*
+*Note: The containers use the openSUSE Leap 15.4 system and should be used for
+managing openSUSE Leap 15.4 systems.*
 
 ### Pre-requisites
 
