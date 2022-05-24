@@ -36,6 +36,6 @@ $COMMAND build -t "$CONTAINER_NAME" -f Dockerfile_qt .
 # start the container with extra "-e" and "-v" options to allow accessing
 # the local X server from inside the Docker container
 $COMMAND run -it -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro --net=host \
-    -e ZYPP_LOCKFILE_ROOT=/mnt -e YAST_SCR_TARGET=/mnt \
-    -v "$HOME/.Xauthority:/root/.Xauthority:ro" -v "/:/mnt" \
+    -v "$XAUTHORITY:$XAUTHORITY:ro" -e XAUTHORITY \
+    -e ZYPP_LOCKFILE_ROOT=/mnt -e YAST_SCR_TARGET=/mnt -v "/:/mnt" \
     --privileged --pid=host --ipc=host --rm "$CONTAINER_NAME" /sbin/yast2 "$@"
