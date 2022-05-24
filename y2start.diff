@@ -1,18 +1,17 @@
 diff --git a/src/y2start/y2start b/src/y2start/y2start
-index 67f1504..e724875 100755
+index 67f1504..4e4bb77 100755
 --- a/src/y2start/y2start
 +++ b/src/y2start/y2start
-@@ -55,6 +55,15 @@ set_title = args[:client_options][:params].empty? || NO_CLI_CLIENTS.include?(arg
+@@ -55,6 +55,14 @@ set_title = args[:client_options][:params].empty? || NO_CLI_CLIENTS.include?(arg
  Yast::UI.SetApplicationTitle(
    Yast::Y2StartHelpers.application_title(args[:client_name])) if set_title
  
-+target_dir = ENV["YAST_TARGET_DIR"] || ""
-+if File.directory?(target_dir)
-+  begin
-+    Yast.import "Installation"
-+    Yast::Installation.destdir = target_dir
-+  rescue NoMethodError
-+    abort "Cannot set the target directory"
++target_dir = ENV["YAST_SCR_TARGET"] || ""
++if !target_dir.empty? && target_dir != "/"
++  if File.directory?(target_dir)
++    Yast::Y2StartHelpers.redirect_scr(target_dir)
++  else
++    abort "Cannot set the target, directory #{target_dir} not found"
 +  end
 +end
  

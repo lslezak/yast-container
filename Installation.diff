@@ -1,20 +1,14 @@
 diff --git a/library/control/src/modules/Installation.rb b/library/control/src/modules/Installation.rb
-index 94b132a2..9951046b 100644
+index 94b132a2..aba82c45 100644
 --- a/library/control/src/modules/Installation.rb
 +++ b/library/control/src/modules/Installation.rb
-@@ -214,6 +214,15 @@ module Yast
+@@ -212,6 +212,9 @@ module Yast
+       elsif Stage.initial
+         @destdir = "/mnt"
          @scr_destdir = "/mnt"
++      elsif WFM.scr_chrooted?
++        @destdir = WFM.scr_root
++        @scr_destdir = WFM.scr_root
        end
  
-+      target_dir = ENV["YAST_TARGET_DIR"] || ""
-+      if !target_dir.empty?
-+        if File.directory?(target_dir)
-+          @destdir = target_dir
-+        else
-+          abort "Cannot set the target, directory #{target_dir} not found"
-+        end
-+      end
-+
        nil
-     end
- 
