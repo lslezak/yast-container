@@ -8,6 +8,15 @@
 
 set -ex
 
+if command -v podman &> /dev/null; then
+    COMMAND="podman"
+elif command -v docker &> /dev/null; then
+    COMMAND="docker"
+else
+    echo "ERROR: Container runtime not installed, install 'podman' or 'docker' package" >&2
+    exit 1
+fi
+
 # target container name
 CONTAINER_NAME="yast-mgmt-ncurses"
 
@@ -16,10 +25,10 @@ CONTAINER_NAME="yast-mgmt-ncurses"
 VERSION=15.4
 
 # build the docker image first (it reuses the built image in the next run)
-docker build --build-arg image="$DOCKER_BASE_IMAGE" -t "$CONTAINER_NAME" .
+$COMMAND build --build-arg image="$DOCKER_BASE_IMAGE" -t "$CONTAINER_NAME" .
 
 # start the container with extra "-e" and "-v" options to allow accessing
 # the local X server from inside the Docker container
-docker run -it -v "/:/mnt" --privileged --pid=host --ipc=host --hostname yast-container \
+$COMMAND run -it -v "/:/mnt" --privileged --pid=host --ipc=host --hostname yast-container \
     -e ZYPP_LOCKFILE_ROOT=/mnt -e YAST_SCR_TARGET=/mnt \
     --rm "$CONTAINER_NAME" /sbin/yast "$@"

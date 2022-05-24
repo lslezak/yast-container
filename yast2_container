@@ -12,6 +12,15 @@ set -ex
 # target container name
 CONTAINER_NAME="yast-mgmt-qt"
 
+if command -v podman &> /dev/null; then
+    COMMAND="podman"
+elif command -v docker &> /dev/null; then
+    COMMAND="docker"
+else
+    echo "ERROR: Container runtime not installed, install 'podman' or 'docker' package" >&2
+    exit 1
+fi
+
 # VERSION=`(. /etc/os-release && echo "$VERSION")`
 # The used patches are against 15.4
 VERSION=15.4
@@ -20,13 +29,13 @@ VERSION=15.4
 : "${DOCKER_BASE_IMAGE=opensuse/leap:$VERSION}"
 
 # make sure the base image is up to date
-docker build --build-arg image="$DOCKER_BASE_IMAGE" -t yast-mgmt-ncurses .
+$COMMAND build --build-arg image="$DOCKER_BASE_IMAGE" -t yast-mgmt-ncurses .
 # build the docker image first (it reuses the built image in the next run)
-docker build -t "$CONTAINER_NAME" -f Dockerfile_qt .
+$COMMAND build -t "$CONTAINER_NAME" -f Dockerfile_qt .
 
 # start the container with extra "-e" and "-v" options to allow accessing
 # the local X server from inside the Docker container
-docker run -it -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro --net=host \
+$COMMAND run -it -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro --net=host \
     -e ZYPP_LOCKFILE_ROOT=/mnt -e YAST_SCR_TARGET=/mnt \
     -v "$HOME/.Xauthority:/root/.Xauthority:ro" -v "/:/mnt" \
     --privileged --pid=host --ipc=host --rm "$CONTAINER_NAME" /sbin/yast2 "$@"
