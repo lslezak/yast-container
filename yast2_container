@@ -39,6 +39,6 @@ CHROOT_DIR="/mnt"
 set -x
 # start the container
 $TOOL run -it --privileged --pid=host --ipc=host --net=host \
-    -v /dev/disk:/dev/disk -v /:$CHROOT_DIR $EXTRA_OPTIONS -v /var/cache/zypp:/var/cache/zypp \
+    -v /dev:/dev -v /:$CHROOT_DIR $EXTRA_OPTIONS -v /var/cache/zypp:/var/cache/zypp \
     -e ZYPP_LOCKFILE_ROOT=$CHROOT_DIR -e YAST_SCR_TARGET=$CHROOT_DIR \
     --rm "$IMAGE_NAME" "$CMD" "$@"
