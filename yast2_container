@@ -1,41 +1,56 @@
 #! /bin/bash
 
-# This is a helper script which builds the YaST Docker container and starts
-# the specified YaST module there. It bind-mounts the host system into the
-# container so YaST can change the chost system through that.
-#
-# This script runs the YaST module with Qt (graphical) UI so it needs a running
-# X server.
+# Download YaST image and start it in a container to manage the host system.
 
-set -ex
+set -e
 
-# target container name
-CONTAINER_NAME="yast-mgmt-qt"
+echo "** WARNING: This is an experimental tool, do not use in production systems!!"
+echo "** There is a hight risk of breaking the system or data loss!"
+echo
 
+# use podman, if not available try docker
 if command -v podman &> /dev/null; then
-    COMMAND="podman"
+    TOOL="podman"
 elif command -v docker &> /dev/null; then
-    COMMAND="docker"
+    TOOL="docker"
 else
     echo "ERROR: Container runtime not installed, install 'podman' or 'docker' package" >&2
     exit 1
 fi
 
-# VERSION=`(. /etc/os-release && echo "$VERSION")`
-# The used patches are against 15.4
-VERSION=15.4
+. /etc/os-release
+if [ "$ID" == "sles" -a "$VERSION_ID" == "15.4" ]; then
+  GUI_IMAGE="registry.suse.de/devel/yast/head/container/containers/yast-mgmt-qt"
+  TUI_IMAGE="registry.suse.de/devel/yast/head/container/containers/yast-mgmt-ncurses"
+elif [ "$ID" == "opensuse-leap" -a "$VERSION_ID" == "15.4" ]; then
+  GUI_IMAGE="registry.opensuse.org/yast/head/containers_leap_latest/yast-mgmt-qt-leap_latest"
+  TUI_IMAGE="registry.opensuse.org/yast/head/containers_leap_latest/yast-mgmt-ncurses-leap_latest"
+else
+    echo "ERROR: Unsupported system: $PRETTY_NAME" >&2
+    exit 1
+fi
 
-# base OS for the Docker image
-: "${DOCKER_BASE_IMAGE=opensuse/leap:$VERSION}"
+if [ "`basename $0`" == "yast_container" -o -z "$DISPLAY" ]; then
+    EXTRA_OPTIONS=""
+    IMAGE_NAME="$TUI_IMAGE"
+else
+    # start the container with extra "-e" and "-v" options to allow accessing
+    # the local X server from inside the Docker container
+    EXTRA_OPTIONS="-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro -v $XAUTHORITY:$XAUTHORITY:ro -e XAUTHORITY"
+    IMAGE_NAME="$GUI_IMAGE"
+fi
 
-# make sure the base image is up to date
-$COMMAND build --build-arg image="$DOCKER_BASE_IMAGE" -t yast-mgmt-ncurses .
-# build the docker image first (it reuses the built image in the next run)
-$COMMAND build -t "$CONTAINER_NAME" -f Dockerfile_qt .
+# make sure the container image is up to date
+$TOOL pull $IMAGE_NAME
 
-# start the container with extra "-e" and "-v" options to allow accessing
-# the local X server from inside the Docker container
-$COMMAND run -it -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro --net=host \
-    -v "$XAUTHORITY:$XAUTHORITY:ro" -e XAUTHORITY \
-    -e ZYPP_LOCKFILE_ROOT=/mnt -e YAST_SCR_TARGET=/mnt -v "/:/mnt" \
-    --privileged --pid=host --ipc=host --rm "$CONTAINER_NAME" /sbin/yast2 "$@"
+# the default command to run
+: "${CMD=/sbin/yast2}"
+# where is the host system root mounted in the container
+CHROOT_DIR="/mnt"
+
+set -x
+# start the container
+$TOOL run -it --privileged --pid=host --ipc=host --net=host \
+    -v /dev/disk:/dev/disk -v /:$CHROOT_DIR $EXTRA_OPTIONS -v /var/cache/zypp:/var/cache/zypp \
+    -e ZYPP_LOCKFILE_ROOT=$CHROOT_DIR -e YAST_SCR_TARGET=$CHROOT_DIR \
+    --rm "$IMAGE_NAME" "$CMD" "$@"
