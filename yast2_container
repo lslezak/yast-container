@@ -18,26 +18,14 @@ else
     exit 1
 fi
 
-. /etc/os-release
-if [ "$ID" == "sles" -a "$VERSION_ID" == "15.4" ]; then
-  GUI_IMAGE="registry.suse.de/devel/yast/head/container/containers/yast-mgmt-qt"
-  TUI_IMAGE="registry.suse.de/devel/yast/head/container/containers/yast-mgmt-ncurses"
-elif [ "$ID" == "opensuse-leap" -a "$VERSION_ID" == "15.4" ]; then
-  GUI_IMAGE="registry.opensuse.org/yast/head/containers_leap_latest/yast-mgmt-qt-leap_latest"
-  TUI_IMAGE="registry.opensuse.org/yast/head/containers_leap_latest/yast-mgmt-ncurses-leap_latest"
-else
-    echo "ERROR: Unsupported system: $PRETTY_NAME" >&2
-    exit 1
-fi
-
 if [ "`basename $0`" == "yast_container" -o -z "$DISPLAY" ]; then
     EXTRA_OPTIONS=""
-    IMAGE_NAME="$TUI_IMAGE"
+    IMAGE_NAME="registry.opensuse.org/yast/head/containers_leap_latest/yast-mgmt-ncurses-leap_latest"
 else
     # start the container with extra "-e" and "-v" options to allow accessing
     # the local X server from inside the Docker container
     EXTRA_OPTIONS="-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro -v $XAUTHORITY:$XAUTHORITY:ro -e XAUTHORITY"
-    IMAGE_NAME="$GUI_IMAGE"
+    IMAGE_NAME="registry.opensuse.org/yast/head/containers_leap_latest/yast-mgmt-qt-leap_latest"
 fi
 
 # make sure the container image is up to date
