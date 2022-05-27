@@ -18,27 +18,38 @@
 
 Name:           yast-in-container
 Version:        4.5.0
-
 Release:        0
-Summary:        YaST2 Main Package
+Summary:        Scripts for running YaST in a container
 License:        GPL-2.0-only
 Group:          System/YaST
-URL:            https://github.com/yast/yast-yast2
+URL:            https://github.com/yast/yast-in-container
+BuildArch:      noarch
 Source0:        %{name}-%{version}.tar.bz2
 
 # recommend Podman for running the containers, optionally Docker might be used
 Recommends:     podman
 
 %description
-This package contains scripts and data needed for SUSE Linux
-installation with YaST2
+This package contains scripts which can run YaST in a container and manage
+the host system.
 
 %prep
+
 %setup -q
 
 %build
 
 %install
+
+# install scripts
+mkdir -p %{buildroot}/%{_sbindir}
+install -m 755 src/scripts/yast2_container %{buildroot}/%{_sbindir}
+install -m 755 src/scripts/yast_container %{buildroot}/%{_sbindir}
+
+# install license and documentation
+mkdir -p %{buildroot}/%{_docdir}/%{name}
+install -m 644 COPYING %{buildroot}/%{_docdir}/%{name}
+install -m 644 README.md %{buildroot}/%{_docdir}/%{name}
 
 %if !0%{?usrmerged}
 mkdir -p %{buildroot}/sbin
@@ -47,18 +58,15 @@ ln -s ../%{_sbindir}/yast2_container %{buildroot}/sbin
 %endif
 
 
+%files
 
-# documentation (not included in devel subpackage)
-%doc %dir %{yast_docdir}
-%license %{yast_docdir}/COPYING
-%doc %{yast_docdir}/README.md
-
-
+%{_sbindir}/yast*_container
 %if !0%{?usrmerged}
 /sbin/yast*_container
 %endif
 
-%{_sbindir}/yast*
-
+%doc %dir %{_docdir}/%{name}
+%license %{_docdir}/%{name}/COPYING
+%doc %{_docdir}/%{name}/README.md
 
 %changelog
