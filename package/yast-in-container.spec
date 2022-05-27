@@ -23,7 +23,8 @@ Summary:        Scripts for running YaST in a container
 License:        GPL-2.0-only
 Group:          System/YaST
 URL:            https://github.com/yast/yast-in-container
-BuildArch:      noarch
+# the container images are only built for x86_64
+ExclusiveArch:  x86_64
 Source0:        %{name}-%{version}.tar.bz2
 
 # recommend Podman for running the containers, optionally Docker might be used
