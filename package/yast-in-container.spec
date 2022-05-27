@@ -1,7 +1,7 @@
 #
-# spec file for package yast2
+# spec file for package yast-in-container
 #
-# Copyright (c) 2022 SUSE LINUX GmbH, Nuernberg, Germany.
+# Copyright (c) 2022 SUSE LLC
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -56,7 +56,6 @@ mkdir -p %{buildroot}/sbin
 ln -s ../%{_sbindir}/yast_container  %{buildroot}/sbin
 ln -s ../%{_sbindir}/yast2_container %{buildroot}/sbin
 %endif
-
 
 %files
 
