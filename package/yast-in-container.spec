@@ -19,7 +19,7 @@
 Name:           yast-in-container
 Version:        4.5.0
 Release:        0
-Summary:        Scripts for running YaST in a container
+Summary:        Experimental package for running YaST in a container
 License:        GPL-2.0-only
 Group:          System/YaST
 URL:            https://github.com/yast/yast-in-container
@@ -31,8 +31,11 @@ Source0:        %{name}-%{version}.tar.bz2
 Recommends:     podman
 
 %description
-This package contains scripts which can run YaST in a container and manage
+This package contains scripts which can run YaST in a container for managing
 the host system.
+
+* WARNING: This an experimental package, do not use in a production system!
+* There is a high risk of breaking the system or data loss!
 
 %prep
 

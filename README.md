@@ -15,55 +15,73 @@ The goal of this project is to decrease the size of the system and to avoid
 unnecessary dependencies.
 
 Using a separate container would also make upgrading the tools, libraries
-and languages easier, without affecting the users. We could use newer a Ruby in
-the YaST container and keep the old one in SLE/Leap for backward compatibility.
+and languages easier, possibly without affecting the users. We could use a newer
+Ruby in the YaST container and keep the old one in SLE/Leap for backward
+compatibility.
 
 ## Proof of Concept
 
 *Note: The built containers use the openSUSE Leap 15.4 system and should be used
-only for managing openSUSE Leap 15.4 or SLE-15-SP4 systems.*
+only for managing openSUSE Leap 15.4 or SLE-15-SP4 systems!*
 
-### Pre-requisites
+You can disable this product check by setting `VERSION_CHECK=0` environment
+variable. Be very carful when doing this, use it on your own risk!!
+
+## Pre-requisites
 
 A container runtime is required to run YaST in a container. Both [podman](
 https://podman.io/) and [Docker](https://www.docker.com/) are supported.
 
-#### Podman
+### Podman
+
+Note: Podman is automatically recommended by the `yast-in-container` package.
 
 ```shell
 # install the package
-zypper in podman
+zypper install podman
 ```
 
-#### Docker
+### Docker
 
-The testing scripts use [Docker](https://www.docker.com/) for managing and running
-containers.
+Alternatively the scripts can use [Docker](https://www.docker.com/) for
+managing and running containers.
 
 ```shell
 # install the package
-zypper in docker
+zypper install docker
 # enable and start the Docker service
 systemctl enable docker
 systemctl start docker
 ```
 
-If you want to use Docker as a non-root user add yourselves into the `docker`
+If you want to use Docker as a non-root user you can add yourselves into the `docker`
 user group. *(Security note: Be careful, such users become equivalent to `root`!)*
 
-#### Installing the Scripts
+## Installing the Scripts
 
-The scripts can be installed either from YaST OBS repository
+The scripts can be installed either from YaST OBS YaST:Head repository or can be
+started directly from the Git sources.
 
-or can started directly from the Git sources
-
+```sh
+# add the YaST:Head repository
+zypper addrepo -f 'https://download.opensuse.org/repositories/YaST:/Head/openSUSE_Leap_${releasever}/' YaST:Head
+# install the package
+zypper install yast-in-container
+# disable the repository to not accidentally install some other YaST packages
+zypper modifyrepo -d YaST:Head
+# run the script
+sudo /usr/sbin/yast2_container repositories
 ```
+
+```sh
 # download the scripts
-git clone https://github.com/lslezak/yast-container.git
-cd yast-container
+git clone https://github.com/yast/yast-in-container.git
+cd yast-in-container/src/scripts
+# run the script
+sudo ./yast2_container repositories
 ```
 
-### Running a Container
+## Details
 
 This repository provides two helper scripts, `yast_container` and
 `yast2_container`. The first runs the specified YaST module using text (ncurses)
@@ -76,7 +94,21 @@ YaST module in the container.
 The container is automatically deleted after finishing YaST, if you want to
 inspect the container you have to start it manually.
 
-### Tested Modules
+## Debugging
+
+If you need to run a different command than YaST in the container for testing
+purposes you can specify it with the `CMD` environment variable.
+
+```sh
+# run shell for an interactive session instead of running YaST
+sudo CMD=bash /usr/sbin/yast2_container
+```
+
+The script prints the executed `podman` or `docker` command, if you need to
+run the container with different options just copy&paste the printed command
+to the terminal.
+
+## Tested Modules
 
 This is a list of YaST modules which you can try with the testing image:
 
@@ -90,7 +122,6 @@ This is a list of YaST modules which you can try with the testing image:
   known by the package management
 
 ## Implementation Details
-
 
 ### Accessing the Host System
 
@@ -145,7 +176,7 @@ The YaST log is written into `/var/log/YaST2/y2log` in the host as usually.
 The libzypp lock (`/var/run/zypp.pid`) is also created in the hosts system,
 this avoids running multiple instances of the package management at once.
 
-### Summary
+## Summary
 
 It seems that it should be possible to fully manage the host system from
 a container.
@@ -159,11 +190,18 @@ Also some YaST modules do not make sense in a containerized world,
 for example the module for HTTP server. It is supposed that the HTTP server
 would run in a separate container, possibly managed by other tools.
 
-#### Links
+## Links
 
-- https://github.com/yast/yast-ruby-bindings/pull/284
-- https://github.com/yast/yast-yast2/pull/1258
-- https://github.com/yast/yast-registration/pull/577
-- https://github.com/yast/yast-packager/pull/621
-- https://build.opensuse.org/package/show/YaST:Head/yast-mgmt-ncurses-leap_latest
-- https://build.opensuse.org/package/show/YaST:Head/yast-mgmt-qt-leap_latest
+- https://github.com/yast/yast-ruby-bindings/pull/284 - automatic chroot support
+  in the YaST starting script
+- https://github.com/yast/yast-yast2/pull/1258 - automatically set the target
+  system location when chrooted
+- https://github.com/yast/yast-registration/pull/577 - adapt the registration
+  module to run in a chroot
+- https://github.com/yast/yast-packager/pull/621 - adapt the repository and package
+  management modules to run in a chroot
+- https://build.opensuse.org/package/show/YaST:Head/yast-mgmt-ncurses-leap_latest - this
+  OBS project builds the base container image with ncurses UI
+- https://build.opensuse.org/package/show/YaST:Head/yast-mgmt-qt-leap_latest - this
+  OBS project extends the ncurses container image with Qt and X libraries so it can
+  run the graphical UI

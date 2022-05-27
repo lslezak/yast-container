@@ -1,12 +1,31 @@
 #! /bin/bash
 
-# Download YaST image and start it in a container to manage the host system.
+# Helper script which runs YaST in a container.
+#
+# Usage:
+#   yast2_container <options> <yast_module>
+#
+# The script needs to be started as "root" unless you use Docker with non-root
+# access enabled.
+#
+# All command line arguments are passed to YaST.
+#
 
 set -e
 
-echo "** WARNING: This is an experimental tool, do not use in production systems!!"
-echo "** There is a hight risk of breaking the system or data loss!"
+echo "** WARNING: This is an experimental tool, do not use it in production systems!!"
+echo "** There is a risk of breaking the system or data loss!"
 echo
+
+# check whether the host system is compatible with the container image,
+# can be disabled with VERSION_CHECK=0, use on your risk!!
+. /etc/os-release
+if [ "$VERSION_ID" != "15.4" ] || [ "$ID" != "sles" -a "$ID" != "opensuse-leap" ] && [ "$VERSION_CHECK" != "0" ];  then
+    echo "ERROR: Unsupported system: $PRETTY_NAME" >&2
+    echo "Only 'openSUSE Leap 15.4' or 'SLES-15-SP4' systems are curently supported"
+    echo "On your risk you can disable this check by setting VERSION_CHECK=0"
+    exit 1
+fi
 
 # use podman, if not available try docker
 if command -v podman &> /dev/null; then
@@ -18,12 +37,13 @@ else
     exit 1
 fi
 
+# when called as "yast_container" or when $DISPLAY is not set use the smaller ncurses image
 if [ "`basename $0`" == "yast_container" -o -z "$DISPLAY" ]; then
     EXTRA_OPTIONS=""
     IMAGE_NAME="registry.opensuse.org/yast/head/containers_leap_latest/yast-mgmt-ncurses-leap_latest"
 else
-    # start the container with extra "-e" and "-v" options to allow accessing
-    # the local X server from inside the Docker container
+    # otherwise use the bigger Qt image and  start the container with extra
+    # options to allow accessing the local X server from inside the Docker container
     EXTRA_OPTIONS="-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro -v $XAUTHORITY:$XAUTHORITY:ro -e XAUTHORITY"
     IMAGE_NAME="registry.opensuse.org/yast/head/containers_leap_latest/yast-mgmt-qt-leap_latest"
 fi
@@ -39,6 +59,6 @@ CHROOT_DIR="/mnt"
 set -x
 # start the container
 $TOOL run -it --privileged --pid=host --ipc=host --net=host \
-    -v /dev:/dev -v /:$CHROOT_DIR $EXTRA_OPTIONS -v /var/cache/zypp:/var/cache/zypp \
+    -v /dev:/dev -v /:$CHROOT_DIR $EXTRA_OPTIONS \
     -e ZYPP_LOCKFILE_ROOT=$CHROOT_DIR -e YAST_SCR_TARGET=$CHROOT_DIR \
-    --rm "$IMAGE_NAME" "$CMD" "$@"
+    --rm $IMAGE_NAME "$CMD" "$@"
