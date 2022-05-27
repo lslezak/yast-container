@@ -1,4 +1,4 @@
-# Experimental YaST Docker Container
+# Experimental YaST Management Container
 
 This is a proof of concept (PoC) project for testing how to run YaST in
 a container to manage the host system.
@@ -11,45 +11,67 @@ breaking the system or data loss!**
 
 ## Purpose
 
-The goal is to decrease the size of the system and avoid unnecessary dependencies.
+The goal of this project is to decrease the size of the system and to avoid
+unnecessary dependencies.
 
 Using a separate container would also make upgrading the tools, libraries
-and languages easier, without affecting the users. We could use newer Ruby in
+and languages easier, without affecting the users. We could use newer a Ruby in
 the YaST container and keep the old one in SLE/Leap for backward compatibility.
 
 ## Proof of Concept
 
-This repository contains some scripts and container definitions.
-
-*Note: The containers use the openSUSE Leap 15.4 system and should be used for
-managing openSUSE Leap 15.4 systems.*
+*Note: The built containers use the openSUSE Leap 15.4 system and should be used
+only for managing openSUSE Leap 15.4 or SLE-15-SP4 systems.*
 
 ### Pre-requisites
+
+A container runtime is required to run YaST in a container. Both [podman](
+https://podman.io/) and [Docker](https://www.docker.com/) are supported.
+
+#### Podman
+
+```shell
+# install the package
+zypper in podman
+```
+
+#### Docker
 
 The testing scripts use [Docker](https://www.docker.com/) for managing and running
 containers.
 
 ```shell
-# install the packages
-zypper in docker git
+# install the package
+zypper in docker
 # enable and start the Docker service
 systemctl enable docker
 systemctl start docker
-# download the scripts
-git clone https://github.com/lslezak/yast-container.git
-cd yast-container
 ```
 
 If you want to use Docker as a non-root user add yourselves into the `docker`
 user group. *(Security note: Be careful, such users become equivalent to `root`!)*
 
+#### Installing the Scripts
+
+The scripts can be installed either from YaST OBS repository
+
+or can started directly from the Git sources
+
+```
+# download the scripts
+git clone https://github.com/lslezak/yast-container.git
+cd yast-container
+```
+
 ### Running a Container
 
-There are two helper scripts, `yast_container` and `yast2_container`. The first
-runs the specified YaST module in ncurses UI, the second one uses Qt UI.
+This repository provides two helper scripts, `yast_container` and
+`yast2_container`. The first runs the specified YaST module using text (ncurses)
+UI, the second one uses graphical UI (Qt), just like the usual `yast` and
+`yast2` scripts do.
 
-The scripts build the container image at start if it is not built yet and then
-run the specified YaST module in the container.
+The scripts download the container image from OBS and then run the specified
+YaST module in the container.
 
 The container is automatically deleted after finishing YaST, if you want to
 inspect the container you have to start it manually.
@@ -58,32 +80,17 @@ inspect the container you have to start it manually.
 
 This is a list of YaST modules which you can try with the testing image:
 
-- `yast2_container chroot_wrapper repositories` - shows the repositories from
-  the host system, unfortunately it tries to save the changes to the container...
-- `yast2_container chroot_wrapper sw_single` - package installation works fine,
-  tha packages are correctly installed in the host system (though there is a
-  problem with the libzypp lock, see below...)
-- `yast2_container chroot_wrapper key_manager` - displays the imported GPG keys
-  known by the package management - again, saving changes does not work
-- `yast2_container sysconfig` - the patched modules can edit the files in the
-  host system properly
-- `yast2_container chroot_wrapper disk` - it displays the devices, but it does not
-  display the mount points (probably because `/etc/fstab` is read from the container)
+- `yast2_container scc` - can register the system against SCC, RMT/SMT are also
+  supported, importing a self-signed SSL certificate works properly
+- `yast2_container repositories` - shows and edits the repositories from
+  the host system, should fully work
+- `yast2_container sw_single` - package installation works fine,
+  tha packages are correctly installed in the host system
+- `yast2_container key_manager` - displays the imported GPG keys
+  known by the package management
 
-Feel free to experiment with other YaST modules... :wink:
-  
 ## Implementation Details
 
-The [chroot_wrapper.rb](./chroot_wrapper.rb) helper script just redirects SCR
-and initializes the package manager in the `/mnt` subdirectory. Then it runs
-the specified YaST client as usually. But that does not guarantee that the
-module will work properly in the client, see the problems mentioned below.
-
-## Problems
-
-Unfortunately that helper does not solve all problems, in general you cannot
-expect that you can just wrap existing modules by this wrapper and everything
-will work fine. No, that's not the case... :worried:
 
 ### Accessing the Host System
 
@@ -122,13 +129,8 @@ command is available and where it needs to run.
 - Run it in the container but copy the result into the target system
 - Run it in the host system using `chroot` (but that requires the command to be
   available in the host system)
-- Run the command using `ssh`, this would ensure it is fully executed in the host
-  system context
-
-*Note: The YaST SCR component allow chrooting (see the [chroot_wrapper.rb](
-./chroot_wrapper.rb) file), but that uses the parser and YaST libraries from the
-host system, that means it would require some YaST packages there. That's against
-the goal which we want to achieve with containers...*
+- Run the command using SSH, this would ensure it is fully executed in the host
+  system context, but that would require SSH to be installed and running.
 
 ### Other Interactions with the System
 
@@ -138,38 +140,30 @@ or not. It turned out that even loading kernel modules works with
 
 ### Logging and Locking
 
-The YaST log is written into `/var/log/YaST2/y2log` in the container, after finishing
-the container the log is lost. That's not good for debugging problems.
+The YaST log is written into `/var/log/YaST2/y2log` in the host as usually.
 
-YaST should redirect the logging into `/mnt`, either by setting the logging
-target or indirectly via a symlink in `/var/log` in the container.
-
-A similar problem is with locking. E.g libzypp creates `/var/run/zypp.pid` lock
-file to avoid running multiple instances of the package management at once.
-But that file is currently created inside the container...
-
-### Sending Signals
-
-Normally the processes in a container start with PID 1 and the processes in
-the host or in other containers are not visible.
-
-That's a problem if you need to send a signal to a processes running
-in the host or you need to check whether some process is running.
-
-Fortunately Docker provides the `--pid=host` option which disables the process
-name space and allows to see all processes in the host. See more details in the
-[documentation](https://docs.docker.com/engine/reference/run/#pid-settings---pid).
+The libzypp lock (`/var/run/zypp.pid`) is also created in the hosts system,
+this avoids running multiple instances of the package management at once.
 
 ### Summary
 
 It seems that it should be possible to fully manage the host system from
 a container.
 
-However, the current YaST is not prepared for that. The adjustments seem to
+However, the current YaST is not fully prepared for that. The adjustments seem to
 be small but a lot of places would need to be updated. It should be similar
 to moving some configuration steps from the second installation stage
 (running in `/`) to the first stage (running in `/mnt`) as we did some time ago.
 
 Also some YaST modules do not make sense in a containerized world,
 for example the module for HTTP server. It is supposed that the HTTP server
-would run in a separate container, managed by other tools.
+would run in a separate container, possibly managed by other tools.
+
+#### Links
+
+- https://github.com/yast/yast-ruby-bindings/pull/284
+- https://github.com/yast/yast-yast2/pull/1258
+- https://github.com/yast/yast-registration/pull/577
+- https://github.com/yast/yast-packager/pull/621
+- https://build.opensuse.org/package/show/YaST:Head/yast-mgmt-ncurses-leap_latest
+- https://build.opensuse.org/package/show/YaST:Head/yast-mgmt-qt-leap_latest
