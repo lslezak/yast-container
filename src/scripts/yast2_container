@@ -42,8 +42,8 @@ if [ "$(basename "$0")" == "yast_container" ] || [ -z "$DISPLAY" ]; then
     EXTRA_OPTIONS=()
     IMAGE_NAME="registry.opensuse.org/yast/head/containers_leap_latest/yast-mgmt-ncurses-leap_latest"
 else
-    # otherwise use the bigger Qt image and  start the container with extra
-    # options to allow accessing the local X server from inside the Docker container
+    # otherwise use the bigger Qt image and start the container with extra
+    # options to allow accessing the local X server from inside the container
     EXTRA_OPTIONS=(-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro -v "$XAUTHORITY:$XAUTHORITY:ro" -e XAUTHORITY)
     IMAGE_NAME="registry.opensuse.org/yast/head/containers_leap_latest/yast-mgmt-qt-leap_latest"
 fi

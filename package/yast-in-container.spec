@@ -45,7 +45,7 @@ the host system.
 
 %install
 
-# install scripts
+# install main scripts
 mkdir -p %{buildroot}/%{_sbindir}
 install -m 755 src/scripts/yast2_container %{buildroot}/%{_sbindir}
 install -m 755 src/scripts/yast_container %{buildroot}/%{_sbindir}
@@ -55,6 +55,7 @@ mkdir -p %{buildroot}/%{_docdir}/%{name}
 install -m 644 COPYING %{buildroot}/%{_docdir}/%{name}
 install -m 644 README.md %{buildroot}/%{_docdir}/%{name}
 
+# /sbin compatibility symlinks
 %if !0%{?usrmerged}
 mkdir -p %{buildroot}/sbin
 ln -s ../%{_sbindir}/yast_container  %{buildroot}/sbin
@@ -63,11 +64,15 @@ ln -s ../%{_sbindir}/yast2_container %{buildroot}/sbin
 
 %files
 
+# the main scripts
 %{_sbindir}/yast*_container
+
+# /sbin compatibility symlinks
 %if !0%{?usrmerged}
 /sbin/yast*_container
 %endif
 
+# license and documentation
 %doc %dir %{_docdir}/%{name}
 %license %{_docdir}/%{name}/COPYING
 %doc %{_docdir}/%{name}/README.md
